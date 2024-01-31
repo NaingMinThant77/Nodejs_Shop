@@ -97,15 +97,11 @@ const userRoute = require('./routes/user')
 
 app.use("/users", userRoute)
 
+const catRoute = require('./routes/category')
+app.use('/cat', catRoute)
+
 const postRoute = require('./routes/post')
 app.use("/posts", postRoute)
-
-const { saveFile, saveFiles, deleteFile } = require('./utils/gallery')
-
-app.post('/gallery', (req, res, next) => {
-    deleteFile(req.body.name);
-    res.status(200).json({ msg: "File delete" })
-})
 
 app.use((err, req, res, next) => {
     err.status = err.status || 200;

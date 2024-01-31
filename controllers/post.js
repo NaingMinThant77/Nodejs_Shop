@@ -1,8 +1,8 @@
-const DB = require('../dbs/post');
+const DB = require('../models/post');
 const Helper = require('../utils/helper')
 
 const all = async (req, res) => {
-    let posts = await DB.find().populate("user", '-password -__v');
+    let posts = await DB.find().populate("user cat", '-password -__v');
     Helper.fMsg(res, "All Posts", posts)
 }
 
@@ -17,8 +17,10 @@ const get = async (req, res, next) => {
 }
 
 const post = async (req, res) => {
-    let savePost = new DB(req.body);
-    let result = await savePost.save();
+    let userId = req.body._id;
+    delete req.body.user;
+    req.body.user = userId
+    let result = await new DB(req.body).save();
     Helper.fMsg(res, "Post added", result);
 }
 
@@ -35,10 +37,26 @@ const patch = async (req, res, next) => {
 }
 
 const drop = async (req, res) => {
-    await DB.findByIdAndDelete(req.params.id);
-    Helper.fMsg(res, "Post Deleted");
+    let post = await DB.findById(req.params.id)
+    if (post) {
+        await DB.findByIdAndDelete(req.params.id);
+        Helper.fMsg(res, "Post Deleted");
+    } else {
+        next(new Error("Error, no post with that id"))
+    }
+
+}
+
+const byCatId = async (req, res, next) => {
+    let posts = await DB.find({ cat: req.params.id });
+    Helper.fMsg(res, "All Post By Category", posts);
+}
+
+const byUserId = async (req, res, next) => {
+    let posts = await DB.find({ user: req.params.id }).populate('user');
+    Helper.fMsg(res, "All Post By User", posts);
 }
 
 module.exports = {
-    all, get, post, patch, drop
+    all, get, post, patch, drop, byCatId, byUserId
 }
