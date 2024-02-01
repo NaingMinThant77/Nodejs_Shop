@@ -26,20 +26,34 @@ module.exports = {
             }
         }
     },
+    // validateToken: async (req, res, next) => {
+    //     let token = req.headers.authorization;
+    //     if (token) {
+    //         token = token.split(" ")[1];
+    //         let decoded = jwt.decode(token, process.env.SECRET_KEY);
+    //         let user = await UserDB.findById(decoded._id);
+    //         if (user) {
+    //             req.body["user"] = user;
+    //             next()
+    //         } else {
+    //             next(new Error("Tokenization Error "))
+    //         }
+    //     } else {
+    //         next(new Error("Fail Tokenization"))
+    //     }
+    // }
     validateToken: async (req, res, next) => {
-        let token = req.headers.authorization;
-        if (token) {
-            token = token.split(" ")[1];
+        if (req.headers.authorization) {
+            let token = req.headers.authorization.split(" ")[1];
             let decoded = jwt.decode(token, process.env.SECRET_KEY);
-            let user = await UserDB.findById(decoded._id);
-            if (user) {
-                req.body["user"] = user;
+            if (decoded) {
+                req.body["user"] = decoded;
                 next()
             } else {
                 next(new Error("Tokenization Error "))
             }
         } else {
-            next(new Error("Fail Tokenization"))
+            next(new Error("Fail Authorization Tokenization"))
         }
     }
 }

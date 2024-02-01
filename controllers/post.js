@@ -1,5 +1,6 @@
 const DB = require('../models/post');
 const Helper = require('../utils/helper')
+const commentDB = require('../models/comment')
 
 const all = async (req, res) => {
     let posts = await DB.find().populate("user cat", '-password -__v');
@@ -8,12 +9,12 @@ const all = async (req, res) => {
 
 const get = async (req, res, next) => {
     let id = req.params.id;
-    let post = await DB.findById(id).populate("user");
-    if (post) {
-        Helper.fMsg(res, "Single Post Get", post)
-    } else {
-        next(new Error("Error, no post with that id"))
-    }
+    // let post = await DB.findById(id).populate('user tag', '-__v -_id -create');
+    let post = await DB.findById(id).select('title content');
+    let comments = await commentDB.find({ postId: post._id });
+    post = post.toObject();
+    post["comments"] = comments;
+    Helper.fMsg(res, "Single Post Get", post)
 }
 
 const post = async (req, res) => {
@@ -44,7 +45,6 @@ const drop = async (req, res) => {
     } else {
         next(new Error("Error, no post with that id"))
     }
-
 }
 
 const byCatId = async (req, res, next) => {
@@ -57,6 +57,41 @@ const byUserId = async (req, res, next) => {
     Helper.fMsg(res, "All Post By User", posts);
 }
 
+const byTag = async (req, res, next) => {
+    let posts = await DB.find({ tag: req.params.id });
+    if (posts) {
+        Helper.fMsg(res, "All Post By Tag", posts);
+    } else {
+        next(new Error("No post with that tag id"))
+    }
+}
+
+const paginate = async (req, res, next) => {
+    let page = req.params.page;
+    page = page == 1 ? 0 : page - 1;
+    let limit = Number(process.env.POST_LIMIT);
+    let skipCount = limit * page;
+    let posts = await DB.find().skip(skipCount).limit(limit);
+    Helper.fMsg(res, "Paginated Posts", posts);
+}
+
+const togglelike = async (req, res, next) => {
+    let post = await DB.findById(req.params.id);
+    if (post) {
+        if (req.params.page == 1) {
+            post.like = post.like + 1;
+        } else {
+            post.like = post.like - 1;
+        }
+
+        await DB.findByIdAndUpdate(post._id, post)
+        let result = await DB.findById(req.params.id);
+        Helper.fMsg(res, "Like Added", result);
+    } else {
+        next(new Error("No post with that tag id"))
+    }
+}
+
 module.exports = {
-    all, get, post, patch, drop, byCatId, byUserId
+    all, get, post, patch, drop, byCatId, byUserId, paginate, byTag, togglelike
 }

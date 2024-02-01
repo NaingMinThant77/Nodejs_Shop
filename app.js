@@ -103,6 +103,14 @@ app.use('/cat', catRoute)
 const postRoute = require('./routes/post')
 app.use("/posts", postRoute)
 
+const tagRoute = require('./routes/tag')
+app.use("/tag", tagRoute)
+
+const CommentRoute = require('./routes/comment')
+app.use("/comment", CommentRoute)
+
+
+
 app.use((err, req, res, next) => {
     err.status = err.status || 200;
     res.status(err.status).json({
